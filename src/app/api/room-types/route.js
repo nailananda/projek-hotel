@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
-export async function GET(request) {
+export async function GET() {
   try {
     const roomTypes = await prisma.roomType.findMany({
       orderBy: {
@@ -12,13 +12,11 @@ export async function GET(request) {
         rooms: {
           select: {
             id: true,
-            roomNumber: true,
-            floor: true,
-            status: true,
           },
-          orderBy: {
-            roomNumber: "asc",
+          where: {
+            status: "TERSEDIA",
           },
+          orderBy: { id: "asc" },
         },
       },
     });
@@ -33,7 +31,7 @@ export async function GET(request) {
         price: roomType.price.toString(),
         facilities: roomType.facilities || [],
         imageUrl: roomType.imageUrl || null,
-        rooms: roomType.rooms,
+        rooms: roomType.rooms.map((room) => ({ id: room.id })),
       })),
     });
   } catch (error) {

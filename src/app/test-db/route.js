@@ -1,9 +1,14 @@
 
 import { NextResponse } from "next/server";
+import { unstable_rethrow } from "next/navigation";
 import prisma from "@/lib/prisma";
+import { requireRole } from "@/lib/authorization";
 
 export async function GET() {
   try {
+    const auth = await requireRole("/test-db");
+    if (auth.error) return auth.error;
+
     await prisma.$connect();
 
     const roomTypeCount = await prisma.roomType.count();
@@ -14,6 +19,7 @@ export async function GET() {
       jumlahTipeKamar: roomTypeCount,
     });
   } catch (error) {
+    unstable_rethrow(error);
     console.error("Database connection error:", error);
 
     return NextResponse.json(
@@ -23,7 +29,5 @@ export async function GET() {
       },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }

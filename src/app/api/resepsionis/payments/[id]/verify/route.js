@@ -5,7 +5,7 @@ import { requireRole } from "@/lib/authorization";
 
 export async function PATCH(request, { params }) {
   try {
-    const auth = await requireRole(["RESEPSIONIS", "ADMIN"]);
+    const auth = await requireRole("/api/resepsionis/payments");
     if (auth.error) return auth.error;
 
     const { id } = await params;

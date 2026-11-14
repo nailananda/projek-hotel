@@ -4,7 +4,9 @@ import { requireRole } from "@/lib/authorization";
 
 // Memeriksa apakah pengguna adalah Admin
 async function cekAdmin() {
-  return requireRole(["ADMIN"], { forbiddenMessage: "Akses khusus Admin." });
+  return requireRole("/api/admin/rooms", {
+    forbiddenMessage: "Akses khusus Admin.",
+  });
 }
 
 // POST: Menambahkan unit kamar baru

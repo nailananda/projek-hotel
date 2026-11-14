@@ -82,7 +82,7 @@ export default function LoginPage() {
 
       // Jika login dan pemeriksaan sesi berhasil,
       // arahkan pengguna ke halaman utama.
-      window.location.href = "/";
+      window.location.href = result.data?.homePath || "/";
     } catch (error) {
       console.error("Login error:", error);
       setIsError(true);

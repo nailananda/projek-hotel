@@ -216,9 +216,7 @@ export default function ReservasiPage() {
         }
 
         const availableRooms = (result.data || []).flatMap((type) =>
-          (type.rooms || [])
-            .filter((room) => room.status === "TERSEDIA")
-            .map((room) => ({
+          (type.rooms || []).map((room) => ({
               ...room,
               roomTypeId: type.id,
               typeName: type.name,
@@ -795,7 +793,7 @@ export default function ReservasiPage() {
 
               {rooms.map((room) => (
                 <option key={room.id} value={room.id}>
-                  {room.typeName} — Kamar {room.roomNumber} —{" "}
+                  {room.typeName} — Kamar tersedia —{" "}
                   {formatRupiah(room.price)} per malam
                 </option>
               ))}
@@ -812,7 +810,7 @@ export default function ReservasiPage() {
             <div className="mb-6 border border-[#E5D5C2] bg-[#F8F3EC] p-4">
               <p className="font-semibold">{selectedRoom.typeName}</p>
               <p className="mt-1 text-sm text-[#76604D]">
-                Nomor kamar: {selectedRoom.roomNumber}
+                Kamar tersedia untuk tipe ini
               </p>
               <p className="mt-1 text-sm text-[#76604D]">
                 Kapasitas: {selectedRoom.capacity} tamu

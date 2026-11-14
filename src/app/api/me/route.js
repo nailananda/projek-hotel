@@ -1,6 +1,8 @@
 
 import { NextResponse } from "next/server";
+import { unstable_rethrow } from "next/navigation";
 import { requireUser } from "@/lib/authorization";
+import { getHomePathForRole } from "@/lib/rbac";
 
 export async function GET() {
   try {
@@ -19,9 +21,11 @@ export async function GET() {
         name: user.name,
         email: user.email,
         role: user.role,
+        homePath: getHomePathForRole(user.role),
       },
     });
   } catch (error) {
+    unstable_rethrow(error);
     console.error("Session check error:", error);
 
     return NextResponse.json(

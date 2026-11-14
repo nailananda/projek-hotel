@@ -1,4 +1,5 @@
 
+import bcrypt from "bcryptjs";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "./src/generated/prisma/client.js";
 
@@ -11,6 +12,33 @@ if (!connectionString) {
 
 const adapter = new PrismaPg({ connectionString });
 const prisma = new PrismaClient({ adapter });
+
+const seedUsers = [
+  {
+    name: "Tamu Demo",
+    email: "tamu.demo@nara-hotel.test",
+    password: "NaraTamu2026!",
+    role: "TAMU",
+  },
+  {
+    name: "Resepsionis Demo",
+    email: "resepsionis.demo@nara-hotel.test",
+    password: "NaraResepsionis2026!",
+    role: "RESEPSIONIS",
+  },
+  {
+    name: "Housekeeping Demo",
+    email: "housekeeping.demo@nara-hotel.test",
+    password: "NaraHousekeeping2026!",
+    role: "HOUSEKEEPING",
+  },
+  {
+    name: "Admin Demo",
+    email: "admin.demo@nara-hotel.test",
+    password: "NaraAdmin2026!",
+    role: "ADMIN",
+  },
+];
 
 async function main() {
   console.log("Memasukkan data awal hotel...");
@@ -76,10 +104,31 @@ async function main() {
     }
   }
 
+  for (const user of seedUsers) {
+    const passwordHash = await bcrypt.hash(user.password, 12);
+
+    await prisma.user.upsert({
+      where: { email: user.email },
+      update: {},
+      create: {
+        name: user.name,
+        email: user.email,
+        passwordHash,
+        role: user.role,
+      },
+    });
+  }
+
   console.log("--------------------------------");
   console.log("Data awal hotel selesai diproses.");
   console.log("Jumlah tipe kamar:", await prisma.roomType.count());
   console.log("Jumlah kamar:", await prisma.room.count());
+  console.log("Akun demo (tidak menimpa akun dengan email yang sudah ada):");
+  for (const user of seedUsers) {
+    console.log(
+      `${user.role}: ${user.email} / ${user.password}`
+    );
+  }
   console.log("--------------------------------");
 }
 

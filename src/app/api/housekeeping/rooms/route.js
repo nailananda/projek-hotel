@@ -1,11 +1,12 @@
 
 import { NextResponse } from "next/server";
+import { unstable_rethrow } from "next/navigation";
 import prisma from "@/lib/prisma";
 import { requireRole } from "@/lib/authorization";
 
 export async function GET() {
   try {
-    const auth = await requireRole(["HOUSEKEEPING", "ADMIN"]);
+    const auth = await requireRole("/api/housekeeping/rooms");
     if (auth.error) return auth.error;
 
     // 3. Ambil seluruh daftar kamar
@@ -24,6 +25,7 @@ export async function GET() {
       data: rooms,
     });
   } catch (error) {
+    unstable_rethrow(error);
     console.error("Housekeeping rooms error:", error);
 
     return NextResponse.json(

@@ -93,8 +93,9 @@ main > header nav button {
 
 #beranda {
   min-height: 610px;
-  overflow: hidden;
+  overflow: visible;
   isolation: isolate;
+  z-index: 40;
   background-position: center 52%;
   background-size: cover;
 }
@@ -165,7 +166,8 @@ main > header nav button {
 
 #tentang h2,
 #kamar h2,
-#fasilitas h2,
+#daftar-fasilitas h1,
+#daftar-fasilitas h2,
 #reservasi h2 {
   font-family: Georgia, "Times New Roman", serif;
   font-weight: 500;
@@ -262,21 +264,32 @@ main > header nav button {
     #faf3e9;
 }
 
-#fasilitas article {
-  border-radius: 8px;
+#daftar-fasilitas article {
+  border-radius: 16px;
   background: rgba(255, 249, 240, 0.82);
   box-shadow: 0 5px 20px rgba(83, 52, 31, 0.035);
 }
 
-#fasilitas article:hover {
+#daftar-fasilitas article:hover {
   background: #fffaf3;
   box-shadow: 0 12px 28px rgba(83, 52, 31, 0.09);
   transform: translateY(-4px);
 }
 
-#fasilitas article > div:first-child {
-  border-radius: 50%;
-  background: #f0e0cd;
+#daftar-fasilitas article > div:first-child {
+  border-radius: 12px;
+  background: #d8c1a7;
+}
+
+#kamar,
+#fasilitas,
+#tentang,
+#kontak {
+  scroll-margin-top: 7rem;
+}
+
+.facility-card {
+  scroll-margin-top: 96px;
 }
 
 /* =========================

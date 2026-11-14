@@ -4,7 +4,9 @@ import prisma from "@/lib/prisma";
 import { requireRole } from "@/lib/authorization";
 
 async function cekAdmin() {
-  return requireRole(["ADMIN"], { forbiddenMessage: "Akses khusus Admin." });
+  return requireRole("/api/admin/room-types", {
+    forbiddenMessage: "Akses khusus Admin.",
+  });
 }
 
 function validasiFasilitas(facilities) {

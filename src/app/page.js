@@ -4,7 +4,9 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import NotificationButton from "@/components/NotificationButton";
+import FacilitiesExperience from "@/components/FacilitiesExperience";
+import SiteFooter from "@/components/SiteFooter";
+import SiteNavigation from "@/components/SiteNavigation";
 
 const roomImages = {
   "Standard Room":
@@ -14,14 +16,6 @@ const roomImages = {
   "Suite Room":
     "https://images.unsplash.com/photo-1611892440504-42a792e24d32?auto=format&fit=crop&w=1000&q=85",
 };
-
-const hotelFacilities = [
-  "Kamar Nyaman",
-  "Restoran",
-  "Kolam Renang",
-  "WiFi Gratis",
-  "Spa & Wellness",
-];
 
 const heroSlides = [
   {
@@ -76,8 +70,56 @@ export default function Home() {
   const [today, setToday] = useState("");
 
   const [activeSlide, setActiveSlide] = useState(0);
+  const [activeSection, setActiveSection] = useState("beranda");
   const [heroPaused, setHeroPaused] = useState(false);
   const touchStartX = useRef(null);
+
+  useEffect(() => {
+    const sectionIds = [
+      "beranda",
+      "kamar",
+      "fasilitas",
+      "tentang",
+      "kontak",
+    ];
+    const sections = sectionIds
+      .map((id) => document.getElementById(id))
+      .filter(Boolean);
+    let animationFrame = 0;
+
+    function updateActiveSection() {
+      animationFrame = 0;
+      let currentSection = sections[0];
+      const activationLine = 200;
+
+      for (const section of sections) {
+        if (section.getBoundingClientRect().top <= activationLine) {
+          currentSection = section;
+        } else {
+          break;
+        }
+      }
+
+      if (currentSection) {
+        setActiveSection(currentSection.id);
+      }
+    }
+
+    function handleScroll() {
+      if (animationFrame !== 0) return;
+      animationFrame = window.requestAnimationFrame(updateActiveSection);
+    }
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    updateActiveSection();
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (animationFrame !== 0) {
+        window.cancelAnimationFrame(animationFrame);
+      }
+    };
+  }, []);
 
   // Geser otomatis tiap 5 detik.
   useEffect(() => {
@@ -298,7 +340,7 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen overflow-hidden bg-[#F7E9D8] text-[#4B3020]">
+    <main className="min-h-screen overflow-x-clip bg-[#F7E9D8] text-[#4B3020]">
       {/* HERO */}
       <section
         id="beranda"
@@ -372,91 +414,14 @@ export default function Home() {
           </button>
         </div>
 
-        {/* NAVBAR */}
-        <header className="absolute inset-x-0 top-0 z-30 border-b border-white/20 bg-[#3D281C]/15 text-white backdrop-blur-[3px]">
-          <nav className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4 md:px-10">
-          <a href="#beranda" className="flex shrink-0 items-center gap-3">
-              <Image
-                src="/nara-icon-light.svg"
-                alt="Logo NARA HOTEL"
-                width={41}
-                height={48}
-                priority
-                unoptimized
-                className="h-12 w-auto"
-              />
-
-              <div>
-                <h1 className="font-serif text-lg tracking-widest md:text-xl">
-                  NARA HOTEL
-                </h1>
-                <p className="text-[9px] tracking-wide text-[#F5DEC4]">
-                  Stay Better, Feel at Home
-                </p>
-              </div>
-            </a>
-
-            <div className="hidden items-center gap-7 text-sm md:flex">
-              <a href="#beranda" className="hover:text-[#E9C69D]">
-                Beranda
-              </a>
-              <a href="#tentang" className="hover:text-[#E9C69D]">
-                Tentang Kami
-              </a>
-              <a href="#kamar" className="hover:text-[#E9C69D]">
-                Kamar
-              </a>
-              <a href="#fasilitas" className="hover:text-[#E9C69D]">
-                Fasilitas
-              </a>
-              <a href="#kontak" className="hover:text-[#E9C69D]">
-                Kontak
-              </a>
-            </div>
-
-            <div className="flex shrink-0 items-center gap-2">
-              {loadingUser ? (
-                <span className="text-xs text-white">
-                  Memuat...
-                </span>
-              ) : user ? (
-                <>
-                  <span className="hidden text-sm text-white sm:inline">
-                    Halo, {user.name}
-                  </span>
-
-                  <button
-                    type="button"
-                    onClick={() => router.push("/reservasi")}
-                    className="rounded-full border border-[#E9C69D] bg-[#6B452D]/80 px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#4B3020]"
-                  >
-                    Reservasi
-                  </button>
-
-                  <NotificationButton />
-
-
-                  <button
-                    type="button"
-                    onClick={handleLogout}
-                    disabled={loggingOut}
-                    className="rounded-full border border-white/50 px-4 py-2.5 text-xs text-white hover:bg-white/15 disabled:opacity-50"
-                  >
-                    {loggingOut ? "Keluar..." : "Keluar"}
-                  </button>
-                </>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => router.push("/login")}
-                  className="rounded-full border border-[#E9C69D] bg-[#57371F]/80 px-5 py-2.5 text-sm font-semibold text-white shadow-lg hover:bg-[#3D281C]"
-                >
-                  Masuk
-                </button>
-              )}
-            </div>
-          </nav>
-        </header>
+        <SiteNavigation
+          activeSection={activeSection}
+          onActiveSectionChange={setActiveSection}
+          user={user}
+          loadingUser={loadingUser}
+          loggingOut={loggingOut}
+          onLogout={handleLogout}
+        />
 
         {/* HERO CONTENT */}
         <div className="relative z-10 mx-auto flex min-h-152.5 max-w-7xl items-center px-6 pb-24 pt-28 md:min-h-172.5 md:px-10">
@@ -671,41 +636,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* FASILITAS */}
-      <section
-        id="fasilitas"
-        className="bg-[#F7E9D8] px-5 py-3 md:px-10 md:py-5"
-      >
-        <div className="mx-auto flex max-w-7xl flex-col gap-7 rounded-2xl bg-linear-to-r from-[#57371F] via-[#70492D] to-[#56351F] px-6 py-7 text-[#FFF4E7] shadow-lg md:flex-row md:items-center md:justify-between md:px-8">
-          <div className="border-b border-white/40 pb-5 md:w-[27%] md:border-b-0 md:border-r md:pb-0">
-            <h2 className="font-serif text-2xl">Fasilitas Unggulan</h2>
-            <p className="mt-2 max-w-xs font-serif text-xs leading-5 text-[#F0DDC7]">
-              Nikmati berbagai fasilitas terbaik untuk menunjang kenyamanan
-              Anda.
-            </p>
-          </div>
-
-          <div className="grid flex-1 grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-5">
-            {hotelFacilities.map((facility) => (
-              <div
-                key={facility}
-                className="flex items-center justify-center text-center"
-              >
-                <p className="font-serif text-[11px] text-[#FFF4E7]">
-                  {facility}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          <a
-            href="#tentang"
-            className="inline-flex shrink-0 items-center justify-center rounded-full bg-[#F5D7B3] px-5 py-3 font-serif text-xs font-semibold text-[#50331F] hover:bg-[#FFE7CC]"
-          >
-            Selengkapnya
-          </a>
-        </div>
-      </section>
+      <FacilitiesExperience />
 
       {/* TENTANG HOTEL */}
       <section
@@ -764,63 +695,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* FOOTER */}
-      <footer
-        id="kontak"
-        className="bg-[#3D281C] px-6 pb-6 pt-12 text-[#FFF4E7] md:px-10"
-      >
-        <div className="mx-auto grid max-w-7xl gap-10 border-b border-white/15 pb-9 sm:grid-cols-2 lg:grid-cols-3">
-          <div>
-            <h2 className="font-serif text-2xl tracking-[0.12em]">
-              NARA HOTEL
-            </h2>
-
-            <p className="mt-4 max-w-sm text-sm leading-7 text-[#E1CBB3]">
-              Menghadirkan kenyamanan, kehangatan, dan pengalaman menginap
-              yang berkesan untuk setiap perjalanan.
-            </p>
-          </div>
-
-          <div>
-            <h3 className="font-serif text-lg">Navigasi</h3>
-
-            <div className="mt-4 flex flex-col gap-3 text-sm text-[#E1CBB3]">
-              <a href="#beranda" className="hover:text-white">
-                Beranda
-              </a>
-              <a href="#tentang" className="hover:text-white">
-                Tentang Kami
-              </a>
-              <a href="#kamar" className="hover:text-white">
-                Pilihan Kamar
-              </a>
-              <a href="#fasilitas" className="hover:text-white">
-                Fasilitas
-              </a>
-            </div>
-          </div>
-
-          <div>
-            <h3 className="font-serif text-lg">Reservasi</h3>
-
-            <p className="mt-4 text-sm leading-7 text-[#E1CBB3]">
-              Ingin merencanakan pengalaman menginap bersama NARA HOTEL?
-            </p>
-
-            <button
-              type="button"
-              onClick={() => router.push("/reservasi")}
-              className="mt-4 inline-flex rounded-full bg-[#D8B58C] px-5 py-3 text-xs font-semibold text-[#3D281C] hover:bg-[#F0D7B8]"
-            >
-              Reservasi Sekarang
-            </button>
-          </div>
-        </div>
-
-        <div className="mx-auto max-w-7xl pt-6 text-center text-xs text-[#D7C4AF]">
-          © 2026 NARA HOTEL. All rights reserved.
-        </div>
-      </footer>
+      <SiteFooter />
     </main>
   );
 }

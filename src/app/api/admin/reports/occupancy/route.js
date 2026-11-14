@@ -1,5 +1,6 @@
 
 import { NextResponse } from "next/server";
+import { unstable_rethrow } from "next/navigation";
 import prisma from "@/lib/prisma";
 import { requireRole } from "@/lib/authorization";
 
@@ -40,7 +41,7 @@ function calculateRate(occupied, total) {
 
 export async function GET(request) {
   try {
-    const auth = await requireRole(["ADMIN"], {
+    const auth = await requireRole("/api/admin/reports/occupancy", {
       forbiddenMessage: "Akses hanya untuk admin.",
     });
     if (auth.error) return auth.error;
@@ -212,6 +213,7 @@ export async function GET(request) {
       },
     });
   } catch (error) {
+    unstable_rethrow(error);
     console.error("OCCUPANCY_REPORT_ERROR:", error);
 
     return NextResponse.json(

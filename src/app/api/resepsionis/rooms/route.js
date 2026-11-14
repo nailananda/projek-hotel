@@ -1,11 +1,12 @@
 
 import { NextResponse } from "next/server";
+import { unstable_rethrow } from "next/navigation";
 import prisma from "@/lib/prisma";
 import { requireRole } from "@/lib/authorization";
 
 export async function GET() {
   try {
-    const auth = await requireRole(["RESEPSIONIS", "ADMIN"]);
+    const auth = await requireRole("/api/resepsionis/rooms");
     if (auth.error) return auth.error;
 
     const rooms = await prisma.room.findMany({
@@ -31,6 +32,7 @@ export async function GET() {
       })),
     });
   } catch (error) {
+    unstable_rethrow(error);
     console.error("Get receptionist rooms error:", error);
 
     return NextResponse.json(

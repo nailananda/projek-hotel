@@ -6,7 +6,7 @@ import { queuePushNotification } from "@/lib/queue-push-notification";
 
 export async function PATCH(request, { params }) {
   try {
-    const auth = await requireRole(["RESEPSIONIS", "ADMIN"]);
+    const auth = await requireRole("/api/resepsionis/reservations");
     if (auth.error) return auth.error;
 
     const { id } = await params;

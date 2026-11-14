@@ -1,7 +1,7 @@
 
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { requireUser } from "@/lib/authorization";
+import { requireRole } from "@/lib/authorization";
 import { queuePushNotification } from "@/lib/queue-push-notification";
 
 // ============================================
@@ -9,7 +9,7 @@ import { queuePushNotification } from "@/lib/queue-push-notification";
 // ============================================
 export async function GET() {
   try {
-    const auth = await requireUser({
+    const auth = await requireRole("/api/reservations", {
       invalidSessionMessage: "Sesi login tidak valid. Silakan login kembali.",
     });
     if (auth.error) return auth.error;
@@ -73,7 +73,7 @@ export async function GET() {
 // ============================================
 export async function POST(request) {
   try {
-    const auth = await requireUser({
+    const auth = await requireRole("/api/reservations", {
       invalidSessionMessage: "Sesi login tidak valid. Silakan login kembali.",
     });
     if (auth.error) return auth.error;

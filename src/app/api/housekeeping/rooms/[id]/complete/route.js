@@ -5,7 +5,7 @@ import { requireRole } from "@/lib/authorization";
 
 export async function PATCH(request, { params }) {
   try {
-    const auth = await requireRole(["HOUSEKEEPING", "ADMIN"]);
+    const auth = await requireRole("/api/housekeeping/rooms");
     if (auth.error) return auth.error;
 
     // 3. Validasi ID kamar

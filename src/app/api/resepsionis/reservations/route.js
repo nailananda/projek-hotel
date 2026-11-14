@@ -1,11 +1,12 @@
 
 import { NextResponse } from "next/server";
+import { unstable_rethrow } from "next/navigation";
 import prisma from "@/lib/prisma";
 import { requireRole } from "@/lib/authorization";
 
 export async function GET() {
   try {
-    const auth = await requireRole(["RESEPSIONIS", "ADMIN"], {
+    const auth = await requireRole("/api/resepsionis/reservations", {
       forbiddenMessage: "Akses ditolak. Khusus resepsionis dan admin.",
     });
     if (auth.error) return auth.error;
@@ -66,6 +67,7 @@ export async function GET() {
       })),
     });
   } catch (error) {
+    unstable_rethrow(error);
     console.error("Get receptionist reservations error:", error);
 
     return NextResponse.json(

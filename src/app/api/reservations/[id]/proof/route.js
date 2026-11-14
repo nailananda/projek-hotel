@@ -1,7 +1,7 @@
 
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { requireUser } from "@/lib/authorization";
+import { requireRole } from "@/lib/authorization";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
@@ -13,7 +13,7 @@ const ALLOWED_TYPES = [
 
 export async function POST(request, { params }) {
   try {
-    const auth = await requireUser();
+    const auth = await requireRole("/api/reservations");
     if (auth.error) return auth.error;
     const userId = auth.user.id;
 
