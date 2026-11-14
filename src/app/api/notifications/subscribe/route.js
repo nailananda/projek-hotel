@@ -1,28 +1,11 @@
 ﻿import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { verifySession } from "@/lib/session";
-import { cookies } from "next/headers";
+import { requireUser } from "@/lib/authorization";
 
 export async function POST(request) {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("nara_session")?.value;
-
-    if (!token) {
-      return NextResponse.json(
-        { message: "Silakan login terlebih dahulu." },
-        { status: 401 }
-      );
-    }
-
-    const session = await verifySession(token);
-
-    if (!session?.userId) {
-      return NextResponse.json(
-        { message: "Sesi login tidak valid." },
-        { status: 401 }
-      );
-    }
+    const auth = await requireUser();
+    if (auth.error) return auth.error;
 
     const body = await request.json();
     const subscription = body.subscription;
@@ -43,12 +26,12 @@ export async function POST(request) {
         endpoint: subscription.endpoint,
       },
       update: {
-        userId: session.userId,
+        userId: auth.user.id,
         p256dh: subscription.keys.p256dh,
         auth: subscription.keys.auth,
       },
       create: {
-        userId: session.userId,
+        userId: auth.user.id,
         endpoint: subscription.endpoint,
         p256dh: subscription.keys.p256dh,
         auth: subscription.keys.auth,

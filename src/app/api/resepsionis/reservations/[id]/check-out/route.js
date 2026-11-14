@@ -1,52 +1,12 @@
 
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import prisma from "@/lib/prisma";
-import { verifySession } from "@/lib/session";
+import { requireRole } from "@/lib/authorization";
 
 export async function PATCH(request, { params }) {
   try {
-    // 1. Periksa sesi login
-    const cookieStore = await cookies();
-    const token = cookieStore.get("nara_session")?.value;
-
-    if (!token) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Silakan login terlebih dahulu.",
-        },
-        { status: 401 }
-      );
-    }
-
-    const session = await verifySession(token);
-
-    if (!session?.userId) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Sesi login tidak valid.",
-        },
-        { status: 401 }
-      );
-    }
-
-    // 2. Periksa hak akses
-    const user = await prisma.user.findUnique({
-      where: { id: Number(session.userId) },
-      select: { role: true },
-    });
-
-    if (!user || !["RESEPSIONIS", "ADMIN"].includes(user.role)) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Akses ditolak.",
-        },
-        { status: 403 }
-      );
-    }
+    const auth = await requireRole(["RESEPSIONIS", "ADMIN"]);
+    if (auth.error) return auth.error;
 
     // 3. Validasi ID reservasi
     const { id } = await params;

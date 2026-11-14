@@ -1,8 +1,7 @@
 
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import prisma from "@/lib/prisma";
-import { verifySession } from "@/lib/session";
+import { requireRole } from "@/lib/authorization";
 
 function getDateString(date) {
   return new Intl.DateTimeFormat("en-CA", {
@@ -41,36 +40,10 @@ function calculateRate(occupied, total) {
 
 export async function GET(request) {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("nara_session")?.value;
-
-    if (!token) {
-      return NextResponse.json(
-        { success: false, message: "Silakan login terlebih dahulu." },
-        { status: 401 }
-      );
-    }
-
-    const session = await verifySession(token);
-
-    if (!session?.userId) {
-      return NextResponse.json(
-        { success: false, message: "Sesi login tidak valid." },
-        { status: 401 }
-      );
-    }
-
-    const admin = await prisma.user.findUnique({
-      where: { id: Number(session.userId) },
-      select: { id: true, role: true },
+    const auth = await requireRole(["ADMIN"], {
+      forbiddenMessage: "Akses hanya untuk admin.",
     });
-
-    if (!admin || admin.role !== "ADMIN") {
-      return NextResponse.json(
-        { success: false, message: "Akses hanya untuk admin." },
-        { status: 403 }
-      );
-    }
+    if (auth.error) return auth.error;
 
     const { searchParams } = new URL(request.url);
     const today = getDateString(new Date());

@@ -1,51 +1,11 @@
 
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
-import { verifySession } from "@/lib/session";
-
-const ROLES = ["TAMU", "RESEPSIONIS", "HOUSEKEEPING", "ADMIN"];
+import { requireRole, USER_ROLES } from "@/lib/authorization";
 
 async function cekAdmin() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("nara_session")?.value;
-
-  if (!token) {
-    return {
-      error: NextResponse.json(
-        { success: false, message: "Silakan login terlebih dahulu." },
-        { status: 401 }
-      ),
-    };
-  }
-
-  const session = await verifySession(token);
-
-  if (!session?.userId) {
-    return {
-      error: NextResponse.json(
-        { success: false, message: "Sesi login tidak valid." },
-        { status: 401 }
-      ),
-    };
-  }
-
-  const user = await prisma.user.findUnique({
-    where: { id: Number(session.userId) },
-    select: { id: true, role: true },
-  });
-
-  if (!user || user.role !== "ADMIN") {
-    return {
-      error: NextResponse.json(
-        { success: false, message: "Akses khusus Admin." },
-        { status: 403 }
-      ),
-    };
-  }
-
-  return { user };
+  return requireRole(["ADMIN"], { forbiddenMessage: "Akses khusus Admin." });
 }
 
 // Mengambil daftar pengguna
@@ -119,7 +79,7 @@ export async function POST(request) {
       );
     }
 
-    if (!ROLES.includes(role)) {
+    if (!USER_ROLES.includes(role)) {
       return NextResponse.json(
         { success: false, message: "Role pengguna tidak valid." },
         { status: 400 }

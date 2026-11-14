@@ -1,8 +1,7 @@
 
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import prisma from "@/lib/prisma";
-import { verifySession } from "@/lib/session";
+import { requireUser } from "@/lib/authorization";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
@@ -14,26 +13,9 @@ const ALLOWED_TYPES = [
 
 export async function POST(request, { params }) {
   try {
-    // 1. Periksa sesi login
-    const cookieStore = await cookies();
-    const token = cookieStore.get("nara_session")?.value;
-
-    if (!token) {
-      return NextResponse.json(
-        { success: false, message: "Silakan login terlebih dahulu." },
-        { status: 401 }
-      );
-    }
-
-    const session = await verifySession(token);
-    const userId = Number(session?.userId);
-
-    if (!Number.isInteger(userId) || userId <= 0) {
-      return NextResponse.json(
-        { success: false, message: "Sesi login tidak valid." },
-        { status: 401 }
-      );
-    }
+    const auth = await requireUser();
+    if (auth.error) return auth.error;
+    const userId = auth.user.id;
 
     // 2. Validasi ID reservasi
     const { id } = await params;

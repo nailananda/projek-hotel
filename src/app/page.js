@@ -3,7 +3,7 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import NotificationButton from "@/components/NotificationButton";
 
 const roomImages = {
@@ -21,6 +21,25 @@ const hotelFacilities = [
   "Kolam Renang",
   "WiFi Gratis",
   "Spa & Wellness",
+];
+
+const heroSlides = [
+  {
+    src: "https://images.unsplash.com/photo-1611892440504-42a792e24d32?auto=format&fit=crop&w=2200&q=90",
+    alt: "Kamar NARA HOTEL",
+  },
+  {
+    src: "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=2200&q=90",
+    alt: "Kamar Deluxe NARA HOTEL",
+  },
+  {
+    src: "https://images.unsplash.com/photo-1770306924605-4ba7075abe7a?auto=format&fit=crop&w=2200&q=85",
+    alt: "Kolam renang NARA HOTEL",
+  },
+  {
+    src: "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=2200&q=85",
+    alt: "Suasana interior NARA HOTEL",
+  },
 ];
 
 function formatRupiah(price) {
@@ -55,6 +74,40 @@ export default function Home() {
   const [checkOut, setCheckOut] = useState("");
   const [guests, setGuests] = useState("1");
   const [today, setToday] = useState("");
+
+  const [activeSlide, setActiveSlide] = useState(0);
+  const [heroPaused, setHeroPaused] = useState(false);
+  const touchStartX = useRef(null);
+
+  // Geser otomatis tiap 5 detik.
+  useEffect(() => {
+    if (heroPaused) return;
+
+    const timer = setInterval(() => {
+      setActiveSlide((current) => (current + 1) % heroSlides.length);
+    }, 5000);
+
+    return () => clearInterval(timer);
+  }, [heroPaused, activeSlide]);
+
+  function goToSlide(index) {
+    setActiveSlide((index + heroSlides.length) % heroSlides.length);
+  }
+
+  function handleTouchStart(event) {
+    touchStartX.current = event.touches[0].clientX;
+  }
+
+  function handleTouchEnd(event) {
+    if (touchStartX.current === null) return;
+
+    const diff = touchStartX.current - event.changedTouches[0].clientX;
+    touchStartX.current = null;
+
+    if (Math.abs(diff) < 50) return;
+
+    goToSlide(diff > 0 ? activeSlide + 1 : activeSlide - 1);
+  }
 
   // Mengambil tanggal setelah halaman dimuat di browser.
   useEffect(() => {
@@ -249,22 +302,92 @@ export default function Home() {
       {/* HERO */}
       <section
         id="beranda"
-        className="relative min-h-[610px] bg-cover bg-center md:min-h-[690px]"
-        style={{
-          backgroundImage:
-            "linear-gradient(90deg, rgba(48,29,17,0.76), rgba(48,29,17,0.35), rgba(48,29,17,0.12)), url('https://images.unsplash.com/photo-1611892440504-42a792e24d32?auto=format&fit=crop&w=2200&q=90')",
-        }}
+        className="relative min-h-152.5 md:min-h-172.5"
+        onMouseEnter={() => setHeroPaused(true)}
+        onMouseLeave={() => setHeroPaused(false)}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
       >
+        {/* CAROUSEL BACKGROUND */}
+        <div className="absolute inset-0 overflow-hidden bg-[#3D281C]">
+          {heroSlides.map((slide, index) => (
+            <Image
+              key={slide.src}
+              src={slide.src}
+              alt={slide.alt}
+              fill
+              priority={index === 0}
+              unoptimized
+              sizes="100vw"
+              aria-hidden={index !== activeSlide}
+              className={`object-cover transition-opacity duration-1000 motion-reduce:transition-none ${
+                index === activeSlide ? "opacity-100" : "opacity-0"
+              }`}
+            />
+          ))}
+
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage:
+                "linear-gradient(90deg, rgba(48,29,17,0.76), rgba(48,29,17,0.35), rgba(48,29,17,0.12))",
+            }}
+          />
+        </div>
+
+        {/* KONTROL CAROUSEL */}
+        <div className="absolute bottom-28 right-5 z-20 flex items-center gap-3 md:bottom-36 md:right-10">
+          <button
+            type="button"
+            onClick={() => goToSlide(activeSlide - 1)}
+            aria-label="Gambar sebelumnya"
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/50 bg-[#3D281C]/40 text-white backdrop-blur-sm hover:bg-[#3D281C]/70"
+          >
+            ‹
+          </button>
+
+          <div className="flex items-center gap-2">
+            {heroSlides.map((slide, index) => (
+              <button
+                key={slide.src}
+                type="button"
+                onClick={() => goToSlide(index)}
+                aria-label={`Tampilkan gambar ${index + 1}`}
+                className={`h-2 rounded-full transition-all ${
+                  index === activeSlide
+                    ? "w-6 bg-[#F5D7B3]"
+                    : "w-2 bg-white/50 hover:bg-white/80"
+                }`}
+              />
+            ))}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => goToSlide(activeSlide + 1)}
+            aria-label="Gambar berikutnya"
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/50 bg-[#3D281C]/40 text-white backdrop-blur-sm hover:bg-[#3D281C]/70"
+          >
+            ›
+          </button>
+        </div>
+
         {/* NAVBAR */}
         <header className="absolute inset-x-0 top-0 z-30 border-b border-white/20 bg-[#3D281C]/15 text-white backdrop-blur-[3px]">
           <nav className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4 md:px-10">
-            <a href="#beranda" className="flex shrink-0 items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-[#F5DDBE] font-serif text-2xl text-[#FFF5E8]">
-                N
-              </div>
+          <a href="#beranda" className="flex shrink-0 items-center gap-3">
+              <Image
+                src="/nara-icon-light.svg"
+                alt="Logo NARA HOTEL"
+                width={41}
+                height={48}
+                priority
+                unoptimized
+                className="h-12 w-auto"
+              />
 
               <div>
-                <h1 className="font-serif text-lg tracking-[0.1em] md:text-xl">
+                <h1 className="font-serif text-lg tracking-widest md:text-xl">
                   NARA HOTEL
                 </h1>
                 <p className="text-[9px] tracking-wide text-[#F5DEC4]">
@@ -336,7 +459,7 @@ export default function Home() {
         </header>
 
         {/* HERO CONTENT */}
-        <div className="relative z-10 mx-auto flex min-h-[610px] max-w-7xl items-center px-6 pb-24 pt-28 md:min-h-[690px] md:px-10">
+        <div className="relative z-10 mx-auto flex min-h-152.5 max-w-7xl items-center px-6 pb-24 pt-28 md:min-h-172.5 md:px-10">
           <div className="max-w-2xl text-[#FFF8EE]">
             <div className="mb-5 flex items-center gap-4">
               <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#F0D0A9]">
@@ -363,85 +486,13 @@ export default function Home() {
           </div>
         </div>
 
-        {/* FORM PENCARIAN */}
-        <div className="absolute inset-x-0 bottom-[-42px] z-20 px-5">
-          <form
-            onSubmit={handleSearch}
-            className="mx-auto grid max-w-4xl gap-3 rounded-2xl border border-[#E7C9A8] bg-[#FFF3E4] p-4 shadow-[0_12px_35px_rgba(48,29,17,0.22)] md:grid-cols-[1fr_1fr_0.8fr_auto] md:items-center md:gap-0 md:p-3"
-          >
-            <label className="flex items-center gap-3 border-b border-[#E7C9A8] px-3 py-2 md:border-b-0 md:border-r">
-              <span className="min-w-0">
-                <span className="block font-serif text-xs font-semibold text-[#57371F]">
-                  Check-in Date
-                </span>
-                <input
-                  type="date"
-                  value={checkIn}
-                  min={today || undefined}
-                  onChange={(event) => {
-                    setCheckIn(event.target.value);
-
-                    if (checkOut && checkOut <= event.target.value) {
-                      setCheckOut("");
-                    }
-                  }}
-                  className="mt-1 w-full bg-transparent text-xs text-[#795D43] outline-none"
-                  aria-label="Tanggal check-in"
-                />
-              </span>
-            </label>
-
-            <label className="flex items-center gap-3 border-b border-[#E7C9A8] px-3 py-2 md:border-b-0 md:border-r">
-              <span className="min-w-0">
-                <span className="block font-serif text-xs font-semibold text-[#57371F]">
-                  Check-out Date
-                </span>
-                <input
-                  type="date"
-                  value={checkOut}
-                  min={checkIn || today || undefined}
-                  onChange={(event) => setCheckOut(event.target.value)}
-                  className="mt-1 w-full bg-transparent text-xs text-[#795D43] outline-none"
-                  aria-label="Tanggal check-out"
-                />
-              </span>
-            </label>
-
-            <label className="flex items-center gap-3 px-3 py-2">
-              <span className="min-w-0">
-                <span className="block font-serif text-xs font-semibold text-[#57371F]">
-                  Jumlah Tamu
-                </span>
-                <select
-                  value={guests}
-                  onChange={(event) => setGuests(event.target.value)}
-                  className="mt-1 w-full bg-transparent text-xs text-[#795D43] outline-none"
-                  aria-label="Jumlah tamu"
-                >
-                  {[1, 2, 3, 4, 5, 6].map((number) => (
-                    <option key={number} value={number}>
-                      {number} Tamu
-                    </option>
-                  ))}
-                </select>
-              </span>
-            </label>
-
-            <button
-              type="submit"
-              className="flex items-center justify-center rounded-xl bg-[#57371F] px-7 py-4 text-sm font-semibold text-white shadow-md hover:bg-[#3D281C]"
-            >
-              Cari Kamar
-            </button>
-          </form>
-        </div>
 
         {/* PEMISAH HERO */}
-        <div className="pointer-events-none absolute -bottom-[2px] left-0 z-10 w-full overflow-hidden leading-none">
+        <div className="pointer-events-none absolute -bottom-0.5 left-0 z-10 w-full overflow-hidden leading-none">
           <svg
             viewBox="0 0 1440 120"
             preserveAspectRatio="none"
-            className="h-[85px] w-full md:h-[110px]"
+            className="h-21.25 w-full md:h-27.5"
           >
             <path
               d="M0,65 C180,10 310,18 480,55 C680,100 810,100 1000,55 C1190,10 1320,25 1440,55 L1440,120 L0,120 Z"
@@ -454,7 +505,7 @@ export default function Home() {
       {/* PILIHAN KAMAR */}
       <section
         id="kamar"
-        className="relative bg-[#F7E9D8] px-5 pb-16 pt-24 md:px-10 md:pb-20 md:pt-16"
+        className="relative z-0 bg-[#F7E9D8] px-5 pb-16 pt-24 md:px-10 md:pb-20 md:pt-16"
       >
         <div className="mx-auto max-w-7xl">
           <div className="mb-7 flex flex-col justify-between gap-5 md:flex-row md:items-center">
@@ -535,7 +586,7 @@ export default function Home() {
                     key={room.id}
                     className="group overflow-hidden rounded-xl border border-[#E7CFB5] bg-[#FFF4E7] shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl"
                   >
-                    <div className="relative h-[205px] overflow-hidden md:h-[220px]">
+                    <div className="relative h-51.25 overflow-hidden md:h-55">
                       <Image
                         src={roomImage}
                         alt={room.name}
@@ -625,7 +676,7 @@ export default function Home() {
         id="fasilitas"
         className="bg-[#F7E9D8] px-5 py-3 md:px-10 md:py-5"
       >
-        <div className="mx-auto flex max-w-7xl flex-col gap-7 rounded-2xl bg-gradient-to-r from-[#57371F] via-[#70492D] to-[#56351F] px-6 py-7 text-[#FFF4E7] shadow-lg md:flex-row md:items-center md:justify-between md:px-8">
+        <div className="mx-auto flex max-w-7xl flex-col gap-7 rounded-2xl bg-linear-to-r from-[#57371F] via-[#70492D] to-[#56351F] px-6 py-7 text-[#FFF4E7] shadow-lg md:flex-row md:items-center md:justify-between md:px-8">
           <div className="border-b border-white/40 pb-5 md:w-[27%] md:border-b-0 md:border-r md:pb-0">
             <h2 className="font-serif text-2xl">Fasilitas Unggulan</h2>
             <p className="mt-2 max-w-xs font-serif text-xs leading-5 text-[#F0DDC7]">
@@ -672,7 +723,7 @@ export default function Home() {
                 width={1200}
                 height={800}
                 unoptimized
-                className="h-[330px] w-full object-cover md:h-[420px]"
+                className="h-82.5 w-full object-cover md:h-105"
               />
             </div>
 

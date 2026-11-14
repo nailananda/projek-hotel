@@ -1,8 +1,7 @@
 
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import prisma from "@/lib/prisma";
-import { verifySession } from "@/lib/session";
+import { requireUser } from "@/lib/authorization";
 import { queuePushNotification } from "@/lib/queue-push-notification";
 
 // ============================================
@@ -10,34 +9,14 @@ import { queuePushNotification } from "@/lib/queue-push-notification";
 // ============================================
 export async function GET() {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("nara_session")?.value;
-
-    if (!token) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Silakan login terlebih dahulu.",
-        },
-        { status: 401 }
-      );
-    }
-
-    const session = await verifySession(token);
-
-    if (!session?.userId) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Sesi login tidak valid. Silakan login kembali.",
-        },
-        { status: 401 }
-      );
-    }
+    const auth = await requireUser({
+      invalidSessionMessage: "Sesi login tidak valid. Silakan login kembali.",
+    });
+    if (auth.error) return auth.error;
 
     const reservations = await prisma.reservation.findMany({
       where: {
-        userId: Number(session.userId),
+        userId: auth.user.id,
       },
       include: {
         room: {
@@ -94,31 +73,10 @@ export async function GET() {
 // ============================================
 export async function POST(request) {
   try {
-    // 1. Periksa sesi login
-    const cookieStore = await cookies();
-    const token = cookieStore.get("nara_session")?.value;
-
-    if (!token) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Silakan login terlebih dahulu.",
-        },
-        { status: 401 }
-      );
-    }
-
-    const session = await verifySession(token);
-
-    if (!session?.userId) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Sesi login tidak valid. Silakan login kembali.",
-        },
-        { status: 401 }
-      );
-    }
+    const auth = await requireUser({
+      invalidSessionMessage: "Sesi login tidak valid. Silakan login kembali.",
+    });
+    if (auth.error) return auth.error;
 
     // 2. Ambil dan validasi data formulir
     const body = await request.json();
@@ -171,25 +129,7 @@ export async function POST(request) {
       );
     }
 
-    // 4. Ambil pengguna dari sesi login
-    const user = await prisma.user.findUnique({
-      where: {
-        id: Number(session.userId),
-      },
-      select: {
-        id: true,
-      },
-    });
-
-    if (!user) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Akun tidak ditemukan. Silakan login kembali.",
-        },
-        { status: 401 }
-      );
-    }
+    const user = auth.user;
 
     // 5. Periksa kamar
     const room = await prisma.room.findUnique({

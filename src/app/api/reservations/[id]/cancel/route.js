@@ -1,38 +1,15 @@
 
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import prisma from "@/lib/prisma";
-import { verifySession } from "@/lib/session";
+import { requireUser } from "@/lib/authorization";
 
 export async function PATCH(request, { params }) {
   try {
-    // 1. Periksa sesi login
-    const cookieStore = await cookies();
-    const token = cookieStore.get("nara_session")?.value;
-
-    if (!token) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Silakan login terlebih dahulu.",
-        },
-        { status: 401 }
-      );
-    }
-
-    const session = await verifySession(token);
-
-    const userId = Number(session?.userId);
-
-    if (!Number.isInteger(userId) || userId <= 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Sesi login tidak valid. Silakan login kembali.",
-        },
-        { status: 401 }
-      );
-    }
+    const auth = await requireUser({
+      invalidSessionMessage: "Sesi login tidak valid. Silakan login kembali.",
+    });
+    if (auth.error) return auth.error;
+    const userId = auth.user.id;
 
     // 2. Ambil ID reservasi
     const { id } = await params;
